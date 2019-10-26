@@ -1,0 +1,1 @@
+- would be nice to apply separate smoothing values to separate Y axis values
