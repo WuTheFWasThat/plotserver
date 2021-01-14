@@ -7,10 +7,15 @@ import subprocess
 import blobfile as bf
 
 
+def normalize_url_or_pattern(url):
+    if url.startswith('az://'):
+        _, _, container, rest = url.split('/', 3)
+        url = f'https://{container}.blob.core.windows.net/{rest}'
+    return url
+
 def matchespattern(pattern, url):
-    if pattern.startswith('az://'):
-        _, _, container, rest = pattern.split('/', 3)
-        pattern = f'https://{container}.blob.core.windows.net/{rest}'
+    pattern = normalize_url_or_pattern(pattern)
+    url = normalize_url_or_pattern(url)
     pattern_parts = pattern.split("/")
     url_parts = url.split("/")
     if len(pattern_parts) != len(url_parts):
@@ -24,7 +29,6 @@ def matchespattern(pattern, url):
             return False, None
     return True, wildcard_parts
 
-
 def parse_jsonl(f):
     def parse_line(x):
         # TODO: do these better
@@ -33,7 +37,9 @@ def parse_jsonl(f):
         x = re.sub(r"\bNaN\b", "null", x)
         return json.loads(x)
 
-    return [parse_line(x) for x in f.read().strip().split("\n")]
+    result = [parse_line(x) for x in f.read().strip().split("\n")]
+    # print(len(result))
+    return result
 
 
 def parse_csv(f):
@@ -63,8 +69,10 @@ def load_data(filenames):
 
 def get_matches_for_patterns(patterns):
     filenames = []
+    # print('patterns', patterns)
     for pattern in patterns:
         filenames.extend(bf.glob(pattern))
+    # print('filenames', filenames)
     return filenames
 
 
@@ -75,6 +83,7 @@ def get_log_infos(pattern_info, all_filenames):
         name = x["name"]
         for filename in all_filenames:
             matches, wild_parts = matchespattern(log_pattern, filename)
+            # print('matches', log_pattern, filename, matches, wild_parts)
             if matches:
                 log_infos.append((":".join([name] + wild_parts), filename))
     return log_infos
