@@ -1,1 +1,3 @@
 - would be nice to apply separate smoothing values to separate Y axis values
+- switch to observable plot https://observablehq.com/@observablehq/plot
+- send only fields frontend uses
